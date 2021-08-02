@@ -1,9 +1,6 @@
 package appl;
 
-import java.util.Iterator;
-import java.util.List;
-
-import core.Message;
+import java.util.Random;
 
 public class OneAppl {
 
@@ -39,14 +36,21 @@ public class OneAppl {
 	
 	public OneAppl(boolean flag){
 		PubSubClient client = new PubSubClient(clientIp, clientPort);
-		String resources[] = {"X", "Y", "Z"};
+		String resources[] = {"W", "X", "Y", "Z"};
 
 		client.subscribe(serverIp, serverPort);
 		
 		try {
-			String result = client.publish(resources[1], serverIp, serverPort);
-			client.consume(result);
-			client.unlock(resources[1], serverIp, serverPort);
+			for(int i = 0;i < 99999; i++){
+				Random rand = new Random();
+				int r = rand.nextInt(resources.length);
+				String var = resources[r];
+
+				String result = client.lock(var, serverIp, serverPort);		//acquire lock
+				client.consume(result);
+				client.unlock(var, serverIp, serverPort);				//release unlock
+			}
+
 			client.unsubscribe(serverIp, serverPort);
 			client.stopPubSubClient();
 		} catch (InterruptedException e) {

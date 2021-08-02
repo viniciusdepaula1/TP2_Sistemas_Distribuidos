@@ -24,7 +24,7 @@ public class UnlockCommand implements PubSubCommand{
 		log.add(m);
 		
 		Message msg = new MessageImpl();
-		msg.setContent(m.getContent());			//conteudo == posso verificar o tipo de conteudo
+		msg.setContent(m.getContent());			//posso verificar o tipo de conteudo
 		msg.setLogId(logId);
 		msg.setType("notify");
 		

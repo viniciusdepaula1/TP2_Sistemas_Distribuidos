@@ -53,8 +53,8 @@ public class PubSubClient {				//recebe e publica
 
 	public void consume(String resource) throws InterruptedException {
 		System.out.println("usando recurso = " + resource);
-		Thread.sleep(30000);
-		System.out.println("cabei");
+		Thread.sleep(10000);
+		System.out.println("parei de usar = " + resource);
 	}
 
 	public String verificaVez(int myLogId, String myVar) throws InterruptedException{
@@ -76,18 +76,15 @@ public class PubSubClient {				//recebe e publica
 		msgUnlock.setType("unlock");
 		msgUnlock.setContent("Unlock " + message);
 
-		Client publisher = new Client(brokerAddress, brokerPort);			//outro cara ta esperando
+		Client publisher = new Client(brokerAddress, brokerPort);			
 		Message received = publisher.sendReceive(msgUnlock);
 
-		System.out.println(received.getLogId());			//id na minha maquina
-		System.out.println(received.getType());
-		System.out.println(received.getContent());
 	}
 
-	public boolean verifyLogs(Set<Message> logs, int myLogId, String myVar) {		//se tiver mais locks que unlocks eu olho a minha position
-		System.out.println("entrei verify logs");																	//se 3locks a mais eu tenho q esperar aparecer 3 unlocks na minha frente
+	public boolean verifyLogs(Set<Message> logs, int myLogId, String myVar) {		//verifico a quantidade de locks e unlocks no log para verificar se posso usar
+		//System.out.println("entrei verify logs");																	
 		Iterator<Message> it = logs.iterator();
-		Integer locks = 0;																												//antes de mim tem 2 lock? tenho q esperar 2 unlocks
+		Integer locks = 0;																												
 		Integer unlocks = 0;
 
 		while(it.hasNext()){
@@ -96,12 +93,10 @@ public class PubSubClient {				//recebe e publica
 			String content = aux.getContent();
 
 			if(id != myLogId){
-				System.out.println("dif");																	//se 3locks a mais eu tenho q esperar aparecer 3 unlocks na minha frente
-
 				String[] divideMessage = content.split(" ");
 				
 				if(divideMessage.length == 2) {
-					System.out.println("mensagem: " + divideMessage[0] + " " + divideMessage[1]);
+					//System.out.println("mensagem: " + divideMessage[0] + " " + divideMessage[1]);
 					if(divideMessage[0].equals("Lock") && divideMessage[1].equals(myVar) && id < myLogId){
 						locks += 1;
 					}
@@ -112,7 +107,7 @@ public class PubSubClient {				//recebe e publica
 			} 
 		}
 
-		System.out.println("numero de locs: " + locks + " numero de unlocks: " + unlocks);
+		//System.out.println("numero de locs: " + locks + " numero de unlocks: " + unlocks);
 
 		if(locks == unlocks)
 			return true;
@@ -120,33 +115,34 @@ public class PubSubClient {				//recebe e publica
 		return false;
 	}
 
-	public String publish(String message, String brokerAddress, int brokerPort) throws InterruptedException {
+	public String lock(String var, String brokerAddress, int brokerPort) throws InterruptedException {
 		Message msgPub = new MessageImpl();
 		msgPub.setBrokerId(brokerPort);
 		msgPub.setType("pub");
-		msgPub.setContent("Lock " + message);
+		msgPub.setContent("Lock " + var);
 		
-		Client publisher = new Client(brokerAddress, brokerPort);			//outro cara ta esperando
-		Message received = publisher.sendReceive(msgPub);			//não saio de 61 até eu receber a resposta do broker quando vai ser o receive? pubcommand
+		Client publisher = new Client(brokerAddress, brokerPort);		
+		Message received = publisher.sendReceive(msgPub);			//não saio até eu receber a resposta do broker
 
-		System.out.println(received.getLogId());			//id na minha maquina
-		System.out.println(received.getType());
+		//System.out.println(received.getLogId());			//id na minha maquina
+		//System.out.println(received.getType());
 		System.out.println(received.getContent());
-		//accquire sucesso? oq q eu faço?????
-		//Set<Message> logs = this.observer.getLogMessages();
+		Thread.sleep(1000);
 
-		//aguardo verificando
-		return verificaVez(received.getLogId(), message);
-		//System.out.println("Resultado: = " + value);
+		return verificaVez(received.getLogId(), var);
+	}
+
+	public void publish(String message, String brokerAddress, int brokerPort){
+		Message msgPub = new MessageImpl();
+		msgPub.setBrokerId(brokerPort);
+		msgPub.setType("pub");
+		msgPub.setContent(message);
 		
-		//vai pro próximo
-		//os dois vão tentar utilizar a var
-		//aqui vamos entrar em acordo
-		//um acordo entre pubsubclients
+		Client publisher = new Client(brokerAddress, brokerPort);
 
-		//o accquire do marcos chegou primeiro em todos os logs dos pubsubclients.
-		//basta olhar o log ver quem chegou primeiro
-		//como vou esperar?  -- mandar pro Brocker q eu terminei de usar??? o accquire precisa do release
+		//  aq ele recebe o feedback do broker
+		publisher.sendReceive(msgPub);
+		
 	}
 	
 	public Set<Message> getLogMessages(){

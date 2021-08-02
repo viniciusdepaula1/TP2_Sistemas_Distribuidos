@@ -18,21 +18,26 @@ public class NotifyCommand implements PubSubCommand{
 		response.setContent("Message notified: " + m.getContent());
 		
 		response.setType("notify_ack");
-		
-		synchronized (log){					//if unlock
+
+		String messageContent[] = m.getContent().split(" ");
+
+		synchronized (log){					
 			log.add(m);
-			log.notifyAll();
+
+			if(messageContent[0].length() == 6){	//if Unlock
+				log.notify();			
+			}
 		}
 
-		System.out.println("Number of Log itens of an Observer " + m.getBrokerId() + " : " + log.size());
+		//System.out.println("Number of Log itens of an Observer " + m.getBrokerId() + " : " + log.size());
 
 		Iterator<Message> it = log.iterator();
-		System.out.println("logs até o momento");
+		//System.out.println("logs até o momento");
 		while(it.hasNext()){
 			Message aux = it.next();
-			System.out.print(aux.getLogId() + " " + aux.getContent() + " | ");
+			//System.out.print(aux.getLogId() + " " + aux.getContent() + " | ");
 		}
-		System.out.println(" ");
+		//System.out.println(" ");
 
 
 		return response;
